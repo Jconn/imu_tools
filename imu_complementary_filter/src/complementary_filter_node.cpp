@@ -33,10 +33,18 @@
 
 int main (int argc, char **argv)
 {
-  ros::init (argc, argv, "ComplementaryFilterROS");
-  ros::NodeHandle nh;
-  ros::NodeHandle nh_private("~");
-  imu_tools::ComplementaryFilterROS filter(nh, nh_private);
-  ros::spin();
+  // force flush of the stdout buffer.
+  // this ensures a correct sync of all prints
+  // even when executed simultaneously within the launch file.
+  setvbuf(stdout, NULL, _IONBF, BUFSIZ);
+
+  rclcpp::init (argc, argv);
+  rclcpp::executors::SingleThreadedExecutor exe;
+
+  std::shared_ptr<imu_tools::ComplementaryFilterROS> filter = 
+    std::make_shared<imu_tools::ComplementaryFilterROS>("ComplementaryFilterROS", false);
+  exe.add_node(filter->get_node_base_interface() );
+  exe.spin();
+  rclcpp::shutdown();
   return 0;
 }

@@ -32,52 +32,56 @@
 #ifndef IMU_TOOLS_COMPLEMENTARY_FILTER_ROS_H
 #define IMU_TOOLS_COMPLEMENTARY_FILTER_ROS_H
 
-#include <sensor_msgs/MagneticField.h>
-#include <geometry_msgs/Vector3Stamped.h>
-#include <message_filters/subscriber.h>
-#include <message_filters/sync_policies/approximate_time.h>
-#include <message_filters/synchronizer.h>
-#include <ros/ros.h>
-#include <sensor_msgs/Imu.h>
-#include <tf/transform_datatypes.h>
-#include <tf/transform_broadcaster.h>
+#include <sensor_msgs/msg/imu.hpp>
+#include <sensor_msgs/msg/magnetic_field.hpp>
+#include <geometry_msgs/msg/vector3_stamped.hpp>
+#include <std_msgs/msg/bool.hpp>
+
+#include <tf2_ros/transform_broadcaster.h>
+#include <tf2_ros/static_transform_broadcaster.h>
+#include <tf2/LinearMath/Transform.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
+
+#include <rclcpp_lifecycle/lifecycle_node.hpp>
+#include <rclcpp_lifecycle/lifecycle_publisher.hpp>
 
 #include "imu_complementary_filter/complementary_filter.h"
 
 namespace imu_tools {
 
-class ComplementaryFilterROS
+class ComplementaryFilterROS : public rclcpp_lifecycle::LifecycleNode 
 {
   public:
-    ComplementaryFilterROS(const ros::NodeHandle& nh, 
-                           const ros::NodeHandle& nh_private);    
+    explicit ComplementaryFilterROS(const std::string & node_name, bool intra_process_comms = false);
     virtual ~ComplementaryFilterROS();
 
   private:
+    rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
+      on_configure(const rclcpp_lifecycle::State &) override;
 
-    // Convenience typedefs
-    typedef sensor_msgs::Imu ImuMsg;
-    typedef sensor_msgs::MagneticField MagMsg;
-    typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Imu, 
-        MagMsg> MySyncPolicy;
-    typedef message_filters::sync_policies::ApproximateTime<ImuMsg, MagMsg> 
-        SyncPolicy;
-    typedef message_filters::Synchronizer<SyncPolicy> Synchronizer;    
-    typedef message_filters::Subscriber<ImuMsg> ImuSubscriber; 
-    typedef message_filters::Subscriber<MagMsg> MagSubscriber;
+    rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
+      on_activate(const rclcpp_lifecycle::State &) override;
 
-    // ROS-related variables.
-    ros::NodeHandle nh_;
-    ros::NodeHandle nh_private_;
-    
-    boost::shared_ptr<Synchronizer> sync_;
-    boost::shared_ptr<ImuSubscriber> imu_subscriber_;
-    boost::shared_ptr<MagSubscriber> mag_subscriber_;
+    rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
+      on_deactivate(const rclcpp_lifecycle::State &) override;
 
-    ros::Publisher imu_publisher_;
-    ros::Publisher rpy_publisher_;
-    ros::Publisher state_publisher_;
-    tf::TransformBroadcaster tf_broadcaster_;
+    rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
+      on_cleanup(const rclcpp_lifecycle::State &) override;
+
+    rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
+      on_shutdown(const rclcpp_lifecycle::State &) override;
+
+    std::shared_ptr<rclcpp::Subscription<sensor_msgs::msg::Imu> > imu_sub_;
+
+    std::shared_ptr<rclcpp::Subscription<sensor_msgs::msg::MagneticField> > mag_sub_;
+
+    std::shared_ptr<rclcpp_lifecycle::LifecyclePublisher<sensor_msgs::msg::Imu>> imu_pub_;
+    std::shared_ptr<rclcpp_lifecycle::LifecyclePublisher<geometry_msgs::msg::Vector3Stamped>> rpy_pub_;
+    std::shared_ptr<rclcpp_lifecycle::LifecyclePublisher<std_msgs::msg::Bool>> state_pub_;
+
+    std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_ = nullptr;
          
     // Parameters:
     bool use_mag_;
@@ -90,16 +94,21 @@ class ComplementaryFilterROS
 
     // State variables:
     ComplementaryFilter filter_;
-    ros::Time time_prev_;
+    rclcpp::Time time_prev_;
     bool initialized_filter_;
+    sensor_msgs::msg::Imu imu_msg_;
+    std::shared_ptr<sensor_msgs::msg::MagneticField> mag_msg_ = nullptr;
 
     void initializeParams();
-    void imuCallback(const ImuMsg::ConstPtr& imu_msg_raw);
-    void imuMagCallback(const ImuMsg::ConstPtr& imu_msg_raw,
-                        const MagMsg::ConstPtr& mav_msg);
-    void publish(const sensor_msgs::Imu::ConstPtr& imu_msg_raw);
+    void imuCallback(const sensor_msgs::msg::Imu::SharedPtr imu_msg_raw);
+    void imuMagCallback(const sensor_msgs::msg::Imu::SharedPtr imu_msg_raw,
+                        const sensor_msgs::msg::MagneticField::SharedPtr mag_msg);
 
-    tf::Quaternion hamiltonToTFQuaternion(
+    void magCallback(const sensor_msgs::msg::MagneticField::SharedPtr mag_msg);
+
+    void publish(const sensor_msgs::msg::Imu::SharedPtr imu_msg_raw);
+
+    tf2::Quaternion hamiltonToTFQuaternion(
         double q0, double q1, double q2, double q3) const;
 };
 
