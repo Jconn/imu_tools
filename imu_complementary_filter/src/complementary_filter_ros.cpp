@@ -34,6 +34,7 @@
 #include <std_msgs/msg/float64.hpp>
 #include <std_msgs/msg/bool.hpp>
 #include <tf2/convert.h>
+#include "include/imu_transformer/tf2_sensor_msgs.h"
 namespace imu_tools {
 
 ComplementaryFilterROS::ComplementaryFilterROS(const std::string & node_name, bool intra_process_comms)
@@ -42,7 +43,7 @@ ComplementaryFilterROS::ComplementaryFilterROS(const std::string & node_name, bo
     initialized_filter_(false)
 {
   RCLCPP_INFO(get_logger(), "Starting ComplementaryFilterROS");
-  initializeParams();
+  onInit();
 
 }
 
@@ -95,6 +96,12 @@ rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
 rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
 ComplementaryFilterROS::on_configure(const rclcpp_lifecycle::State &)
 {
+
+
+  tfBuffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
+  // tfBuffer = new tf2_ros::Buffer(node->get_clock());
+  tfl_ = std::make_shared<tf2_ros::TransformListener>(*tfBuffer_);
+
   RCLCPP_INFO(get_logger(), "configure complete");
   tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(this->shared_from_this());
   int queue_size = 25;
@@ -135,7 +142,11 @@ ComplementaryFilterROS::~ComplementaryFilterROS()
 {
   RCLCPP_INFO(get_logger(), "Destroying ComplementaryFilterROS");
 }
+void ComplementaryFilterROS::onInit()
+{
+  initializeParams();
 
+}
 void ComplementaryFilterROS::initializeParams()
 {
   double gain_acc;
@@ -238,7 +249,17 @@ void ComplementaryFilterROS::imuCallback(const sensor_msgs::msg::Imu::SharedPtr 
 
 void ComplementaryFilterROS::magCallback(const sensor_msgs::msg::MagneticField::SharedPtr mag_msg)
 {
-  mag_msg_ = std::make_shared<sensor_msgs::msg::MagneticField>(*mag_msg);
+
+  try
+  {
+      sensor_msgs::msg::MagneticField mag_out;
+      tfBuffer_->transform(*mag_msg, mag_out, "base_link");
+      mag_msg_ = std::make_shared<sensor_msgs::msg::MagneticField>(mag_out);
+  }
+  catch (tf2::TransformException ex)
+  {
+
+  }
 }
 
 void ComplementaryFilterROS::imuMagCallback(const sensor_msgs::msg::Imu::SharedPtr imu_msg_raw,
@@ -323,7 +344,11 @@ void ComplementaryFilterROS::publish(
 
       tf2::Matrix3x3 M;
       M.setRotation(q);
-      M.getRPY(rpy.vector.x, rpy.vector.y, rpy.vector.z);
+      double x= filter_.getAngularVelocityBiasX();
+      double y = filter_.getAngularVelocityBiasY();
+      double z = filter_.getAngularVelocityBiasZ();
+
+      M.getRPY(x, y, z);
       rpy_pub_->publish(rpy);
 
       // Publish whether we are in the steady state, when doing bias estimation

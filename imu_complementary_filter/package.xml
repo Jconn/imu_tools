@@ -11,6 +11,7 @@
   <author email="robertogl.valenti@gmail.com">Roberto G. Valenti</author>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
+  <build_depend>imu_transformer</build_depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_lifecycle</depend>
   <depend>std_msgs</depend>
@@ -21,6 +22,7 @@
   <depend>launch_testing</depend>
   <depend>tf2</depend>
   <depend>tf2_ros</depend>
+
 
   <test_depend>ament_lint_common</test_depend>
   <test_depend>ament_lint_auto</test_depend>

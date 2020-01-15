@@ -37,12 +37,14 @@
 #include <geometry_msgs/msg/vector3_stamped.hpp>
 #include <std_msgs/msg/bool.hpp>
 
+#include "tf2_ros/message_filter.h"
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2_ros/static_transform_broadcaster.h>
 #include <tf2/LinearMath/Transform.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
+#include "tf2_ros/buffer_interface.h"
 
 #include <rclcpp_lifecycle/lifecycle_node.hpp>
 #include <rclcpp_lifecycle/lifecycle_publisher.hpp>
@@ -81,6 +83,8 @@ class ComplementaryFilterROS : public rclcpp_lifecycle::LifecycleNode
     std::shared_ptr<rclcpp_lifecycle::LifecyclePublisher<geometry_msgs::msg::Vector3Stamped>> rpy_pub_;
     std::shared_ptr<rclcpp_lifecycle::LifecyclePublisher<std_msgs::msg::Bool>> state_pub_;
 
+    std::shared_ptr<tf2_ros::Buffer> tfBuffer_;
+    std::shared_ptr<tf2_ros::TransformListener> tfl_;
     std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_ = nullptr;
          
     // Parameters:
@@ -99,6 +103,7 @@ class ComplementaryFilterROS : public rclcpp_lifecycle::LifecycleNode
     sensor_msgs::msg::Imu imu_msg_;
     std::shared_ptr<sensor_msgs::msg::MagneticField> mag_msg_ = nullptr;
 
+    void onInit();
     void initializeParams();
     void imuCallback(const sensor_msgs::msg::Imu::SharedPtr imu_msg_raw);
     void imuMagCallback(const sensor_msgs::msg::Imu::SharedPtr imu_msg_raw,

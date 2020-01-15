@@ -14,6 +14,7 @@ find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(imu_transformer REQUIRED)
 
 set(library_name ${PROJECT_NAME})
 set(dependencies
@@ -25,6 +26,7 @@ set(dependencies
   tf2_ros
   sensor_msgs
   std_msgs
+  imu_transformer
 )
 
 ## Declare a cpp library
