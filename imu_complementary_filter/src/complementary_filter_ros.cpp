@@ -144,6 +144,7 @@ ComplementaryFilterROS::~ComplementaryFilterROS()
 }
 void ComplementaryFilterROS::onInit()
 {
+
   initializeParams();
 
 }
@@ -155,7 +156,7 @@ void ComplementaryFilterROS::initializeParams()
   double bias_alpha;
   bool do_adaptive_gain;
   double orientation_stddev;
-
+  imu_frame_ = "";
   this->declare_parameter("fixed_frame", "odom");
   this->declare_parameter("use_mag", false);
   this->declare_parameter("publish_tf", false);
@@ -213,6 +214,7 @@ void ComplementaryFilterROS::initializeParams()
 
 void ComplementaryFilterROS::imuCallback(const sensor_msgs::msg::Imu::SharedPtr imu_msg_raw)
 {
+  imu_frame_ = imu_msg_raw->header.frame_id;
   if(mag_msg_ != nullptr)
   {
     imuMagCallback(imu_msg_raw, mag_msg_);
@@ -250,10 +252,12 @@ void ComplementaryFilterROS::imuCallback(const sensor_msgs::msg::Imu::SharedPtr 
 void ComplementaryFilterROS::magCallback(const sensor_msgs::msg::MagneticField::SharedPtr mag_msg)
 {
 
+  if (imu_frame_ == "") return;
+
   try
   {
       sensor_msgs::msg::MagneticField mag_out;
-      tfBuffer_->transform(*mag_msg, mag_out, "base_link");
+      tfBuffer_->transform(*mag_msg, mag_out, imu_frame_);
       mag_msg_ = std::make_shared<sensor_msgs::msg::MagneticField>(mag_out);
   }
   catch (tf2::TransformException ex)
