@@ -15,8 +15,25 @@ find_package(tf2_ros REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(imu_transformer REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
 
 set(library_name ${PROJECT_NAME})
+## Declare a cpp library
+include_directories(include)
+
+set(library_name ${PROJECT_NAME})
+
+set(executable_name complementary_filter_node)
+
+add_executable(${executable_name}
+  src/complementary_filter_node.cpp
+)
+
+add_library(${library_name}
+  src/complementary_filter.cpp
+  src/complementary_filter_ros.cpp
+)
+
 set(dependencies
   rclcpp
   rclcpp_lifecycle
@@ -27,42 +44,23 @@ set(dependencies
   sensor_msgs
   std_msgs
   imu_transformer
+  tf2_geometry_msgs
 )
 
-## Declare a cpp library
-add_library(${library_name}
-  src/complementary_filter.cpp
-  src/complementary_filter_ros.cpp
-)
-
-target_include_directories(${library_name}
-  PUBLIC include
-)
 
 ament_target_dependencies(${library_name}
   ${dependencies}
 )
 
-#  include/imu_complementary_filter/complementary_filter.h
-#  include/imu_complementary_filter/complementary_filter_ros.h
-#)
-
-
-# create complementary_filter_node executable
-add_executable(complementary_filter_node
-  src/complementary_filter_node.cpp)
-
-ament_target_dependencies(complementary_filter_node
+ament_target_dependencies(${executable_name}
   ${dependencies}
 )
 
-target_include_directories(complementary_filter_node
-  PUBLIC include
+target_link_libraries( ${executable_name} ${library_name}
 )
 
-target_link_libraries(complementary_filter_node ${library_name})
 
-install(TARGETS imu_complementary_filter complementary_filter_node
+install(TARGETS ${executable_name} ${library_name}
   ARCHIVE DESTINATION lib 
   LIBRARY DESTINATION lib 
   RUNTIME DESTINATION lib/${PROJECT_NAME} 
@@ -79,6 +77,4 @@ install(DIRECTORY launch
 
 ament_export_include_directories(include)
 ament_export_libraries(${library_name})
-ament_export_dependencies(${dependencies})
-
 ament_package()
