@@ -27,7 +27,7 @@ def generate_launch_description():
 
     urdf_file_name = meka_model + '.urdf'
     xacro_file_name = meka_model + '.urdf.xacro'
-    big_meka_dir = os.path.join(get_package_share_directory('jetbot_gazebo'), 'models',meka_model) 
+    big_meka_dir = os.path.join(get_package_share_directory('mbot4_gazebo'), 'models',meka_model) 
     urdf_full_name = os.path.join(big_meka_dir, urdf_file_name)
 
     robot_publisher = launch_ros.actions.Node(
@@ -56,7 +56,7 @@ def generate_launch_description():
                 'publish_debug_topics': False,
                 'orientation_stddev': 0.01
                 }],
-            remappings=[('imu/mag', 'imu/mag_data'),('imu/data', 'imu/filter_data')]
+            remappings=[('imu/mag', 'imu/mag_data_INACTIVE'),('imu/data', 'imu/filter_data')]
             )
     # Make the imu node take the 'configure' transition
     imu_configure_trans_event = EmitEvent(

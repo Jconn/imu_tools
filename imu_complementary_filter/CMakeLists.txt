@@ -1,9 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(imu_complementary_filter)
-
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
-endif()
+project(meka_imu_complementary_filter)
 
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
@@ -16,7 +12,14 @@ find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(imu_transformer REQUIRED)
 
-set(library_name ${PROJECT_NAME})
+
+include_directories(
+  include
+)
+
+set(library_name complementary_filter)
+set(executable_name ${PROJECT_NAME}_node)
+
 set(dependencies
   rclcpp
   rclcpp_lifecycle
@@ -30,15 +33,10 @@ set(dependencies
 )
 
 ## Declare a cpp library
-add_library(${library_name}
+add_library(${library_name} SHARED
   src/complementary_filter.cpp
   src/complementary_filter_ros.cpp
 )
-
-target_include_directories(${library_name}
-  PUBLIC include
-)
-
 ament_target_dependencies(${library_name}
   ${dependencies}
 )
@@ -49,20 +47,18 @@ ament_target_dependencies(${library_name}
 
 
 # create complementary_filter_node executable
-add_executable(complementary_filter_node
-  src/complementary_filter_node.cpp)
+add_executable(${executable_name}
+  src/complementary_filter_node.cpp
+)
 
-ament_target_dependencies(complementary_filter_node
+target_link_libraries(${executable_name} ${library_name})
+
+ament_target_dependencies(${executable_name}
   ${dependencies}
 )
 
-target_include_directories(complementary_filter_node
-  PUBLIC include
-)
 
-target_link_libraries(complementary_filter_node ${library_name})
-
-install(TARGETS imu_complementary_filter complementary_filter_node
+install(TARGETS ${library_name} ${executable_name}
   ARCHIVE DESTINATION lib 
   LIBRARY DESTINATION lib 
   RUNTIME DESTINATION lib/${PROJECT_NAME} 
