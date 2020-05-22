@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(meka_imu_complementary_filter)
+project(imu_complementary_filter)
 
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
