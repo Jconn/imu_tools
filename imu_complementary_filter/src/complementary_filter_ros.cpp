@@ -132,7 +132,8 @@ ComplementaryFilterROS::on_configure(const rclcpp_lifecycle::State &)
         std::bind(&ComplementaryFilterROS::magCallback, this, std::placeholders::_1)
         );
 
-    //sync_->registerCallback(std::bind(&ComplementaryFilterROS::imuMagCallback, this->shared_from_this(), std::placeholders::_1, std::placeholders::_2) );
+    sync_ = std::make_shared<message_filters::TimeSynchronizer<sensor_msgs::msg::MagneticField, sensor_msgs::msg::Imu>>(*mag_sub_, *imu_sub_, rclcpp::SensorDataQoS()); 
+    sync_->registerCallback(std::bind(&ComplementaryFilterROS::imuMagCallback, this->shared_from_this(), std::placeholders::_1, std::placeholders::_2) );
 
   }
   return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
@@ -215,12 +216,6 @@ void ComplementaryFilterROS::initializeParams()
 void ComplementaryFilterROS::imuCallback(const sensor_msgs::msg::Imu::SharedPtr imu_msg_raw)
 {
   imu_frame_ = imu_msg_raw->header.frame_id;
-  if(mag_msg_ != nullptr)
-  {
-    imuMagCallback(imu_msg_raw, mag_msg_);
-    mag_msg_ = nullptr;
-    return;
-  }
   const geometry_msgs::msg::Vector3& a = imu_msg_raw->linear_acceleration;
   const geometry_msgs::msg::Vector3& w = imu_msg_raw->angular_velocity;
   const rclcpp::Time& time = imu_msg_raw->header.stamp;

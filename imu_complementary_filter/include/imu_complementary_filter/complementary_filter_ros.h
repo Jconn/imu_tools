@@ -112,6 +112,8 @@ class ComplementaryFilterROS : public rclcpp_lifecycle::LifecycleNode
 
     void magCallback(const sensor_msgs::msg::MagneticField::SharedPtr mag_msg);
 
+    std::shared_ptr<message_filters::TimeSynchronizer<sensor_msgs::msg::MagneticField, sensor_msgs::msg::Imu>> sync_;
+
     void publish(const sensor_msgs::msg::Imu::SharedPtr imu_msg_raw);
 
     tf2::Quaternion hamiltonToTFQuaternion(
