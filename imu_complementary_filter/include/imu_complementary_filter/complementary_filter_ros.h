@@ -37,6 +37,7 @@
 #include <geometry_msgs/msg/vector3_stamped.hpp>
 #include <std_msgs/msg/bool.hpp>
 
+#include "message_filters/time_synchronizer.h"
 #include "tf2_ros/message_filter.h"
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2_ros/static_transform_broadcaster.h>

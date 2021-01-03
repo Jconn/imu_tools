@@ -19,7 +19,7 @@ include_directories(
 )
 
 set(library_name complementary_filter)
-set(executable_name ${PROJECT_NAME}_node)
+set(executable_name ${library_name}_node)
 
 set(dependencies
   rclcpp
