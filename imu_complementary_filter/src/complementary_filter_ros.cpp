@@ -131,10 +131,6 @@ ComplementaryFilterROS::on_configure(const rclcpp_lifecycle::State &)
         rclcpp::SensorDataQoS(),
         std::bind(&ComplementaryFilterROS::magCallback, this, std::placeholders::_1)
         );
-
-    sync_ = std::make_shared<message_filters::TimeSynchronizer<sensor_msgs::msg::MagneticField, sensor_msgs::msg::Imu>>(*mag_sub_, *imu_sub_, rclcpp::SensorDataQoS()); 
-    sync_->registerCallback(std::bind(&ComplementaryFilterROS::imuMagCallback, this->shared_from_this(), std::placeholders::_1, std::placeholders::_2) );
-
   }
   return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
 }
